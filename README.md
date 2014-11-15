@@ -1,8 +1,10 @@
 # Rack::Downtime
 
+**WIP**
+
 Add planned downtime messages to your responses
 
-## Usage
+## Overview
 
 ```ruby
 require "rack/downtime"
@@ -27,3 +29,12 @@ SetEnv RACK_DOWNTIME_DISABLE 1
 # Or, turn of insertion
 SetEnv RACK_DOWNTIME_INSERT  0
 ```
+
+## Usage
+
+Note that `Rack::Downtime` will turn streaming responses into buffered
+
+
+## Author
+
+Skye Shaw [sshaw AT gmail.com]
