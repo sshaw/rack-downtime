@@ -7,8 +7,14 @@ Planned downtime management for Rack applications
 
 ## Overview
 
+`Rack::Dowtime` **does not** add a maintenance page -there are *plenty* of ways to do this already. Instead,
+it provides one with a variety of simple ways to *trigger* and *takdown* planned maintenance notifications while a site
+is still up.
+
+### Examples
+
 ```
-# :file strategy 
+# :file notification strategy 
 > echo '2014-11-15T01:00:00-05/2014-11-15T04:00:00-05' > downtime.txt
 ```
 

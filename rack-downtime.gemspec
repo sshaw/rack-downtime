@@ -9,7 +9,11 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Skye Shaw"]
   spec.email         = ["skye.shaw@gmail.com"]
   spec.summary       = %q{Planned downtime management for Rack applications}
-  spec.description   = %q{}
+  spec.description   =<<DOC
+Rack::Downtime provides a variety of ways to easily trigger and display planned maintenance notifications to users 
+while a site is still up. Various strategies are provided that will work with sites of all sizes.
+DOC
+  
   spec.homepage      = ""
   spec.license       = "MIT"
 
