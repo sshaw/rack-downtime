@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Rack::Downtime::VERSION
   spec.authors       = ["Skye Shaw"]
   spec.email         = ["skye.shaw@gmail.com"]
-  spec.summary       = %q{Planned downtime configuration for Rack applications}
+  spec.summary       = %q{Planned downtime management for Rack applications}
   spec.description   = %q{}
   spec.homepage      = ""
   spec.license       = "MIT"

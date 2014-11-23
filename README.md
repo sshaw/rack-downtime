@@ -2,12 +2,12 @@
 
 **WIP**
 
-Add planned downtime messages to your responses
+Planned downtime management for Rack applications
 
 ## Overview
 
 ```
-# File Strategy 
+# :file strategy 
 > echo '2014-11-15T01:00:00-05/2014-11-15T04:00:00-05' > downtime.txt
 ```
 
@@ -51,7 +51,7 @@ element is the start time and the 1st element is the end time.
 The dates must be given as an [ISO 8601 time interval](https://en.wikipedia.org/wiki/ISO_8601#Time_intervals)
 in `start/end` format. If no dates are found `rack.downtime` will contain an empty array.
 
-Downtime messages can also be added to the response's body. See *[Inserting a Downtime Message](#inserting-a-downtime-message])*.
+Downtime messages can also be added to the response's body. See *[Inserting a Downtime Message](#inserting-a-downtime-message)*.
 
 ### Downtime Strategies
 
@@ -62,13 +62,50 @@ is used, which defaults to `:file`.
 
 Looks in the current directory for a file named `downtime.txt`. 
 
+```ruby
+use Rack::Downtime :strategy => :file
+```
+
+To use a file named `my_file.txt`:
+
+```ruby
+use Rack::Downtime :strategy => { :file => "my_file.txt" }
+```
+
 #### `:query`
 
 Looks for a query string parameter named `__dt__`.
 
+```ruby
+use Rack::Downtime :strategy => :query
+```
+
+To use a query string named `q`:
+
+```ruby
+use Rack::Downtime :strategy => { :query => "q" }
+```
+
 #### `:cookie`
 
 Looks for cookie named `__dt__`.
+
+```ruby
+use Rack::Downtime :strategy => :query
+```
+To use a cookie named `oreo`:
+
+```ruby
+use Rack::Downtime :strategy => { :cookie => "oreo" }
+```
+
+#### Custom
+
+Just pass in something that responds to `:call`, accepts a rack environment, and returns a [downtime array](#usage).
+
+```ruby
+use Rack::Downtime :strategy => ->(env) { YourDownTimeConfig.find_dowmtime }
+```
 
 ### Inserting a Downtime Message
 
@@ -79,7 +116,13 @@ Just provide a path to an ERB template to the `:insert` option. The downtime wil
 as `start_time` and `end_time`.
 
 By default the template will be inserted after the `<body>` tag. This can be changed by providing the
-desired location to the `:insert_at` option. The location can be given as a CSS selector or XPath location.
+desired location to the `:insert_at` option. The location can be given as a CSS selector or an XPath location.
+
+Messages are only inserted into HTML responses with a `200` status code.
+
+## TODO
+
+Don't invalidate XHTML responses when inserting a downtime message.
 
 ## Author
 
