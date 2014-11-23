@@ -1,8 +1,9 @@
 # Rack::Downtime
 
-**WIP**
-
 Planned downtime management for Rack applications
+
+[![Build Status](https://travis-ci.org/sshaw/rack-downtime.svg?branch=master)](https://travis-ci.org/sshaw/rack-dowmtime)
+[![Code Climate](https://codeclimate.com/github/sshaw/rack-downtime/badges/gpa.svg)](https://codeclimate.com/github/sshaw/rack-downtime)
 
 ## Overview
 
@@ -115,7 +116,7 @@ When downtime is scheduled a message can be inserted into your response's body.
 Just provide a path to an ERB template to the `:insert` option. The downtime will be passed to the template
 as `start_time` and `end_time`.
 
-By default the template will be inserted after the `<body>` tag. This can be changed by providing the
+By default the template will be inserted after the `body` tag. This can be changed by providing the
 desired location to the `:insert_at` option. The location can be given as a CSS selector or an XPath location.
 
 Messages are only inserted into HTML responses with a `200` status code.

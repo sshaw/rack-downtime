@@ -12,7 +12,7 @@ describe Rack::Downtime do
     File.write("downtime.txt", @downtime)
   end
 
-  after { FileUtils.rm_f(@tmp) }
+  after { FileUtils.rm_rf(@tmp) }
 
   it "sets the environment's rack.downtime to the downtime" do
     set_dates = nil
@@ -73,7 +73,7 @@ describe Rack::Downtime do
       #it "sets the environment's rack.downtime to the downtime"
     end
 
-    it "insets the template into the response" do
+    it "inserts the template into the response" do
       req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
       req.get "/"
 
@@ -91,11 +91,11 @@ describe Rack::Downtime do
 
     describe "the :insert_at option" do
       [["CSS", "body p"], ["xpath", "//body/p"]].each do |format, location|
-        it "insets the template at the given #{format} location" do
+        it "inserts the template at the given #{format} location" do
           req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template, :insert_at => location))
           req.get "/"
 
-          expect(req.last_response.body).to match(%r{<body><p>__HERE__Content!</p>})
+          expect(req.last_response.body).to match("<body><p>__HERE__Content!</p>")
         end
       end
 
@@ -168,12 +168,12 @@ describe Rack::Downtime do
         req = Rack::Test::Session.new(described_class.new(@app, :strategy => { :query => "param" }))
         req.get "/", :param => @downtime
 
-        expect(req.last_response.body).to match(@body)
+        expect(req.last_response.body).to eq(@body)
       end
     end
 
     describe ":file" do
-      it "sets the downtime from the default downtime files" do
+      it "sets the downtime from the given downtime file" do
         path = File.join(@tmp, "im_goin_dooooown.txt")
         File.write(path, @downtime)
 
@@ -183,8 +183,8 @@ describe Rack::Downtime do
         expect(req.last_response.body).to eq(@body)
       end
 
-      describe "when the downtime file is updated" do
-        it "detects the new downtimes" do
+      describe "when the downtime is updated" do
+        it "detects the new downtime" do
           req = Rack::Test::Session.new(described_class.new(@app, :strategy => { :file => "downtime.txt" }))
           req.get "/"
 
