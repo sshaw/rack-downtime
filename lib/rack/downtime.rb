@@ -1,51 +1,57 @@
 require "rack"
+require "erb"
 require "nokogiri"
 
 require "rack/downtime/strategy"
 require "rack/downtime/version"
 
 module Rack
-  class Downtime    
+  class Downtime
     DOWNTIME_DISABLE = "RACK_DOWNTIME_DISABLE".freeze
-    DOWNTIME_INSERT = "RACK_DOWNTIME_INSERT".freeze    
+    DOWNTIME_INSERT = "RACK_DOWNTIME_INSERT".freeze
 
     ENV_KEY = "rack.downtime".freeze
-    # Newer versions of Rack should have there
+    DEFAULT_INSERT_AT = "html body".freeze
+   
+    # Newer versions of Rack should have these
     CONTENT_TYPE = "Content-Type".freeze
     CONTENT_LENGTH = "Content-Length".freeze
 
-    DEFAULT_LOCATION = "html body".freeze
-    DEFAULT_MESSAGE =<<HTML.freeze # ERB?
-<div class="rack-downtime-container"><p class="rack-downtime-message">Downtime scheduled from %s to %s. Sorry for any inconvenience.</p></div>
-HTML
+    class << self
+      attr_writer :strategy
+
+      def strategy
+        @@strategy ||= :file
+      end
+    end
 
     def initialize(app, options = {})
       @app = app
 
-      #@strategy = options[:strategy] || self.class.strategy || FILE_STRATEGY
-      @strategy = options[:strategy] || FILE_STRATEGY      
+      @strategy = options[:strategy] || self.class.strategy
       @strategy = load_strategy(@strategy) unless @strategy.respond_to?(:call)
-      
-      @message = options[:message] || DEFAULT_MESSAGE
-      @insert = options[:insert] || true
-      @insert_at = options[:insert_at] || DEFAULT_LOCATION
+
+      @insert = options[:insert]
+      @insert = load_template(@insert) if @insert
+
+      @insert_at = options[:insert_at] || DEFAULT_INSERT_AT
     end
 
     def call(env)
       return @app.call(env) if ENV[DOWNTIME_DISABLE] == "1"
-      
+
       downtime = get_downtime(env)
-      env[ENV_KEY] = downtime   
+      env[ENV_KEY] = downtime || []
 
       response = @app.call(env)
-      return response if downtime && insert_downtime?(response[1])
+      return response unless downtime && insert_downtime?(response)
 
       old_body = response[2]
       new_body = insert_downtime(old_body, downtime)
 
       old_body.close if old_body.respond_to?(:close)
-      response[1][CONTENT_LENGTH] = Rack::Util.bytesize(new_body)
-      response[2] = new_body
+      response[1][CONTENT_LENGTH] = Rack::Utils.bytesize(new_body).to_s
+      response[2] = [new_body]
 
       response
     end
@@ -53,8 +59,11 @@ HTML
     private
 
     def load_strategy(options)
-      name, config = options.first
-      case name
+      config = nil
+      strategy = options
+      strategy, config = strategy.first if strategy.is_a?(Hash)
+
+      case strategy
       when :cookie
         Strategy::Cookie.new(config)
       when :file
@@ -62,18 +71,24 @@ HTML
       when :query
         Strategy::Query.new(config)
       else
-        raise ArgumentError, "unknown strategy: #{name}"
+        raise ArgumentError, "unknown strategy: #{strategy}"
       end
     end
-    
-    def get_downtime(req)
-      @strategy.call(Rack::Request.new(env))
+
+    def load_template(template)
+      Class.new do
+        include ERB.new(::File.read(template), nil, "<>%-").def_module("render(start_date, end_date)")
+      end.new
     end
-    
-    def insert_downtime?(headers)
-      ENV[DOWNTIME_INSERT] != "0" && @insert && headers[CONTENT_TYPE] =~ /html/
+
+    def get_downtime(env)
+      @strategy.call(env)
     end
-    
+
+    def insert_downtime?(response)
+      response[0] == 200 && ENV[DOWNTIME_INSERT] != "0" && @insert && response[1][CONTENT_TYPE] =~ /html/
+    end
+
     def insert_downtime(old_body, times)
       new_body = ""
       old_body.each { |line| new_body << line }
@@ -82,12 +97,15 @@ HTML
       e = doc.at(@insert_at)
       return new_body unless e
       
-      e.before(sprintf(@message, *times))
+      message = @insert.render(*times)
+      
+      if e.child
+        e.child.before(message)
+      else
+        e.add_child(message)
+      end
 
-      # This will insert doctype if none is there
       doc.to_html
     end
   end
-
-end
 end

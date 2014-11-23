@@ -1,68 +1,81 @@
-require "rack/downtime/util"
+require "rack/request"
+require "rack/utils"
+require "rack/downtime/utils"
 
 class Rack::Downtime
   module Strategy
     class Cookie
-      def self.name=(name)
-        @@name = name
-      end
+      include Rack::Utils
       
-      def initialize(name = nil)
-        @name = name || @@name
+      class << self
+        attr_writer :named
+
+        def named
+          @@named ||= "__dt__"
+        end
       end
 
-      def call(req)
-        downtime = Rack::Downtime::Util.parse_downtime(req.cookies[name])
-        if downtime
-          # Need to remove from here too?
-          # req.env["rack.request.cookie_string"]
-          req.cookies.delete(name)
-        end
+      def initialize(named = nil)
+        @named = named || self.class.named
+      end
 
-        downtime
+      def call(env)
+        req = Rack::Request.new(env)
+        Rack::Downtime::Utils.parse_downtime(req.cookies[@named])
+        #delete_cookie_header!(env, @named) if downtime
+        #downtime
       end
     end
 
     class Query
-      def self.param=(param)
-        @@param = param
-      end
-      
-      def initialize(param = nil)
-        @param = param || @@param
+      class << self
+        attr_writer :param
+
+        def param
+          @@param ||= "__dt__"
+        end
       end
 
-      def call(req)
-        Rack::Downtime::Util.parse_downtime(req.params[@param])
+      def initialize(param = nil)
+        @param = param || self.class.param
+      end
+
+      def call(env)
+        req = Rack::Request.new(env)
+        Rack::Downtime::Utils.parse_downtime(req[@param])
       end
     end
 
     class File
-      def self.path=(path)
-        @@path = path
+      class << self
+        attr_writer :path
+
+        def path
+          @@path ||= "downtime.txt"
+        end
       end
-      
+
       def initialize(path = nil)
-        @path  = path || @@path
+        @path  = path || self.class.path
         @mtime = 0
       end
 
-      def call(req)
-        return unless File.exists?(@path)
+      def call(env)
+        return unless ::File.exists?(@path)
 
-        new_mtime = File.mtime(@path)
+        new_mtime = ::File.mtime(@path).to_i
         if new_mtime > @mtime
-          downtime = parse_downtime(@path)
+          @downtime = parse_downtime(@path)
           @mtime = new_mtime
         end
 
-        downtime
+        @downtime
       end
 
       private
 
       def parse_downtime(path)
-        Rack::Downtime::Util.parse_downtime(File.read(path))
+        Rack::Downtime::Utils.parse_downtime(::File.read(path))
       end
     end
   end

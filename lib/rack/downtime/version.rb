@@ -1,4 +1,5 @@
-class Rack::Downtime
+module Rack
+  class Downtime  
     VERSION = "0.0.1".freeze
   end
 end

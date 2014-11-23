@@ -1,11 +1,11 @@
 require "date"
 
 class Rack::Downtime
-  module Util
+  module Utils
     def parse_downtime(data)
       return unless data
 
-      downtime = data.split("/", 2).map { |date| DateTime.parse(date) }
+      downtime = data.split("/", 2).map { |date| DateTime.iso8601(date) }
       downtime.empty? ? nil : downtime
     end
 
