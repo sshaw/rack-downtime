@@ -8,41 +8,73 @@ Planned downtime management for Rack applications
 ## Overview
 
 `Rack::Dowtime` **does not** add a maintenance page -there are *plenty* of ways to do this already. Instead,
-it provides one with a variety of simple ways to *trigger* and *takdown* planned maintenance notifications while a site
-is still up.
+it provides one with a variety of simple ways to trigger and takedown planned maintenance notifications while a site
+*is still up*.
 
 ### Examples
+
+```ruby
+require "rack/downtime"
+
+use Rack::Downtime
+```
+
+In your layout:
+
+```rhtml
+<% if request.env.include?("rack.downtime") %>
+  <div>
+    <p>
+      We will be down for maintenance on
+      <%= request.env["rack.downtime"][0].strftime("%b %e") %> from
+	  <%= request.env["rack.downtime"][0].strftime("%l:%M %p") %> to
+	  <%= request.env["rack.downtime"][1].strftime("%l:%M %p") EST.
+	</p>
+  </div>
+<% end %>
+```
+(Of course, you'll use a function for this :smirk:.)
+
+Now set the downtime
 
 ```
 # :file notification strategy 
 > echo '2014-11-15T01:00:00-05/2014-11-15T04:00:00-05' > downtime.txt
 ```
 
+If you prefer, `Rack::Downtime` can insert a message for you:
+
 ```ruby
-require "rack/downtime"
-
-# Populates env["rack.downtime"]
-use Rack::Downtime
-
 # Inserts a downtime message
 use Rack::Downtime, :insert => "my_template.erb"
 
 # Specify where to insert message
 use Rack::Downtime, :insert => "my_template.erb", :insert_at => "body #container"
+```
 
-# Get downtime from a cookie
+The downtime can be set various ways:
+
+```ruby
+# From a cookie
 use Rack::Downtime, :strategy => :cookie
 use Rack::Downtime, :strategy => { :cookie => "my_cookie" }
 
-# Or from query string
+# Or from the query string
 use Rack::Downtime, :strategy => :query
 use Rack::Downtime, :strategy => { :query => "dwn__" }
+```
 
-# Some default config
+Alternate configuration:
+
+```ruby
 Rack::Downtime.strategy = :file
 Rack::Downtime::Strategy::File.path = Rails.root.join("downtime.txt")
+```
 
-# Disable via Apache config
+Control its behavior via environment variables:
+
+```
+# Disable
 SetEnv RACK_DOWNTIME_DISABLE 1
 
 # Or, just turn of insertion
@@ -116,9 +148,7 @@ use Rack::Downtime :strategy => ->(env) { YourDownTimeConfig.find_dowmtime }
 
 ### Inserting a Downtime Message
 
-**Note that inserting a message will turn a streaming response into a buffered one**.
-
-When downtime is scheduled a message can be inserted into your response's body.
+When downtime is scheduled a message can be inserted by `Rack::Downtime` into your response's body.
 Just provide a path to an ERB template to the `:insert` option. The downtime will be passed to the template
 as `start_time` and `end_time`.
 
@@ -126,6 +156,9 @@ By default the template will be inserted after the `body` tag. This can be chang
 desired location to the `:insert_at` option. The location can be given as a CSS selector or an XPath location.
 
 Messages are only inserted into HTML responses with a `200` status code.
+
+**Note that when `Rack::Downtime` inserts a message it will turn a streaming response into a buffered one**.
+If this is a problem you can always just insert the downtime yourself:
 
 ## TODO
 

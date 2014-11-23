@@ -41,7 +41,7 @@ module Rack
       return @app.call(env) if ENV[DOWNTIME_DISABLE] == "1"
 
       downtime = get_downtime(env)
-      env[ENV_KEY] = downtime || []
+      env[ENV_KEY] = downtime if downtime
 
       response = @app.call(env)
       return response unless downtime && insert_downtime?(response)
