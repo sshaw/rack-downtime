@@ -6,7 +6,7 @@ class Rack::Downtime
   module Strategy
     class Cookie
       include Rack::Utils
-      
+
       class << self
         attr_writer :named
 
@@ -24,6 +24,24 @@ class Rack::Downtime
         Rack::Downtime::Utils.parse_downtime(req.cookies[@named])
         #delete_cookie_header!(env, @named) if downtime
         #downtime
+      end
+    end
+
+    class Env
+      class << self
+        attr_writer :named
+
+        def named
+          @@named ||= "RACK_DOWNTIME"
+        end
+      end
+
+      def initialize(named = nil)
+        @named = named || self.class.named
+      end
+
+      def call(env)
+        Rack::Downtime::Utils.parse_downtime(env[@named])
       end
     end
 

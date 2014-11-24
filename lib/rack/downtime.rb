@@ -1,4 +1,4 @@
-require "rack"
+require "rack/utils"
 require "erb"
 require "nokogiri"
 
@@ -12,7 +12,7 @@ module Rack
 
     ENV_KEY = "rack.downtime".freeze
     DEFAULT_INSERT_AT = "html body".freeze
-   
+
     # Newer versions of Rack should have these
     CONTENT_TYPE = "Content-Type".freeze
     CONTENT_LENGTH = "Content-Length".freeze
@@ -38,13 +38,13 @@ module Rack
     end
 
     def call(env)
-      return @app.call(env) if ENV[DOWNTIME_DISABLE] == "1"
+      return @app.call(env) if env[DOWNTIME_DISABLE] == "1"
 
       downtime = get_downtime(env)
       env[ENV_KEY] = downtime if downtime
 
       response = @app.call(env)
-      return response unless downtime && insert_downtime?(response)
+      return response unless downtime && insert_downtime?(env, response)
 
       old_body = response[2]
       new_body = insert_downtime(old_body, downtime)
@@ -66,6 +66,8 @@ module Rack
       case strategy
       when :cookie
         Strategy::Cookie.new(config)
+      when :env, :environment
+        Strategy::Env.new(config)
       when :file
         Strategy::File.new(config)
       when :query
@@ -77,16 +79,26 @@ module Rack
 
     def load_template(template)
       Class.new do
-        include ERB.new(::File.read(template), nil, "<>%-").def_module("render(start_date, end_date)")
+        include ERB.new(::File.read(template), nil, "<>%-").def_module("render(start_time, end_time)")
       end.new
     end
 
     def get_downtime(env)
       @strategy.call(env)
+    rescue => e
+      message = "Rack::Downtime failed: #{e}"
+
+      if env["rack.logger"].respond_to?(:error)
+        env["rack.logger"].error(message)
+      else
+        env["rack.errors"].puts(message)
+      end
+
+      nil
     end
 
-    def insert_downtime?(response)
-      response[0] == 200 && ENV[DOWNTIME_INSERT] != "0" && @insert && response[1][CONTENT_TYPE] =~ /html/
+    def insert_downtime?(env, response)
+      @insert && env[DOWNTIME_INSERT] != "0" && response[0] == 200 && response[1][CONTENT_TYPE] =~ /html/
     end
 
     def insert_downtime(old_body, times)
@@ -96,9 +108,9 @@ module Rack
       doc = Nokogiri::HTML(new_body)
       e = doc.at(@insert_at)
       return new_body unless e
-      
+
       message = @insert.render(*times)
-      
+
       if e.child
         e.child.before(message)
       else

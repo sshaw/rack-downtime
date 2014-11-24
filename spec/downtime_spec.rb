@@ -58,19 +58,34 @@ describe Rack::Downtime do
       end
     end
 
-
     context "when RACK_DOWNTIME_INSERT = 0" do
-      before { ENV["RACK_DOWNTIME_INSERT"] = "0"  }
-      after  { ENV.delete("RACK_DOWNTIME_INSERT") }
-
       it "does not insert the template" do
         req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
-        req.get "/"
+        req.get "/", nil, "RACK_DOWNTIME_INSERT" => "0"
 
         expect(req.last_response.body).to_not match("__HERE__")
       end
 
       #it "sets the environment's rack.downtime to the downtime"
+    end
+
+    context "when RACK_DOWNTIME_DISABLE = 1" do
+      it "does not insert the template" do
+        req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
+        req.get "/", nil, "RACK_DOWNTIME_DISABLE" => "1"
+
+        expect(req.last_response.body).to_not match("__HERE__")
+      end
+
+      it "does not set rack.downtime" do
+        set_dates = nil
+        app = new_app { |env| set_dates = env["rack.downtime"] }
+
+        req = Rack::Test::Session.new(described_class.new(new_app))
+        req.get "/", nil, "RACK_DOWNTIME_DISABLE" => "1"
+
+        expect(set_dates).to be_nil
+      end
     end
 
     it "inserts the template into the response" do
@@ -81,7 +96,7 @@ describe Rack::Downtime do
     end
 
     it "passes downtime times to the template" do
-      File.write(@template, "<%= start_date.hour %>/<%= end_date.hour %>")
+      File.write(@template, "<%= start_time.hour %>/<%= end_time.hour %>")
 
       req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
       req.get "/"
@@ -154,6 +169,15 @@ describe Rack::Downtime do
       #     expect(req.last_response.body).to eq(@body)
       #   end
       # end
+    end
+
+    describe ":env" do
+      it "sets the downtime from the RACK_DOWNTIME environment variable" do
+        req = Rack::Test::Session.new(described_class.new(@app, :strategy => :env))
+        req.get "/", nil, "RACK_DOWNTIME" => @downtime
+
+        expect(req.last_response.body).to eq(@body)
+      end
     end
 
     describe ":query" do
