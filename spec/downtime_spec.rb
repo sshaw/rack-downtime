@@ -92,7 +92,7 @@ describe Rack::Downtime do
       req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
       req.get "/"
 
-      expect(req.last_response.body).to eq_ignore "<!doctype html><html><body>__HERE__<p>Content!</p></body></html>"
+      expect(req.last_response.body).to eq_html "<!doctype html><html><body>__HERE__<p>Content!</p></body></html>"
     end
 
     it "passes downtime times to the template" do
@@ -101,7 +101,7 @@ describe Rack::Downtime do
       req = Rack::Test::Session.new(described_class.new(new_app, :insert => @template))
       req.get "/"
 
-      expect(req.last_response.body).to eq_ignore "<!doctype html><html><body>0/2<p>Content!</p></body></html>"
+      expect(req.last_response.body).to eq_html "<!doctype html><html><body>0/2<p>Content!</p></body></html>"
     end
 
     describe "the :insert_at option" do

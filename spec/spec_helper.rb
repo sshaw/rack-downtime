@@ -25,11 +25,9 @@ RSpec.configure do |c|
   }
 end
 
-RSpec::Matchers.define :eq_ignore do |expect|
-  expect.gsub!(/\s{2,}|\n/, "")
-  
+# Poor man's TestXml
+RSpec::Matchers.define :eq_html do |expect|  
   match do |actual|
-    actual.gsub!(/\s{2,}|\n/, "")                                   
-    actual.casecmp(expect) == 0
+    Nokogiri::HTML(expect).to_html == Nokogiri::HTML(actual).to_html
   end
 end
