@@ -138,7 +138,7 @@ describe Rack::Downtime do
     end
 
     it "raises an ArgumentError when the strategy is unknown" do
-      expect { described_class.new(@app, :strategy => :g_code) }.to raise_error(ArgumentError, /unknown/) 
+      expect { described_class.new(@app, :strategy => :g_code) }.to raise_error(ArgumentError, /unknown/)
     end
 
     describe ":cookie" do

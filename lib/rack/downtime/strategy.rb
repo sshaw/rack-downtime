@@ -11,7 +11,7 @@ class Rack::Downtime
         attr_writer :named
 
         def named
-          @@named ||= "__dt__"
+          @named ||= "__dt__"
         end
       end
 
@@ -22,7 +22,7 @@ class Rack::Downtime
       def call(env)
         req = Rack::Request.new(env)
         Rack::Downtime::Utils.parse_downtime(req.cookies[@named])
-        #delete_cookie_header!(env, @named) if downtime
+        #delete_cookie_header!(env, @name) if downtime
         #downtime
       end
     end
@@ -32,7 +32,7 @@ class Rack::Downtime
         attr_writer :named
 
         def named
-          @_named ||= "RACK_DOWNTIME"
+          @named ||= "RACK_DOWNTIME"
         end
       end
 
@@ -47,7 +47,7 @@ class Rack::Downtime
 
     class Header < Env
       def self.named
-        @_named ||= "X-Downtime"
+        @named ||= "X-Downtime"
       end
 
       def initialize(named = nil)
@@ -61,7 +61,7 @@ class Rack::Downtime
         attr_writer :param
 
         def param
-          @@param ||= "__dt__"
+          @param ||= "__dt__"
         end
       end
 
@@ -80,7 +80,7 @@ class Rack::Downtime
         attr_writer :path
 
         def path
-          @@path ||= "downtime.txt"
+          @path ||= "downtime.txt"
         end
       end
 
