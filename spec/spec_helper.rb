@@ -1,4 +1,5 @@
 require "rspec"
+require "nokogiri"
 require "rack/test"
 require "rack/downtime"
 

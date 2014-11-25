@@ -70,6 +70,8 @@ module Rack
         Strategy::Env.new(config)
       when :file
         Strategy::File.new(config)
+      when :header
+        Strategy::Header.new(config)
       when :query
         Strategy::Query.new(config)
       else

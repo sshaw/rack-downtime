@@ -32,7 +32,7 @@ class Rack::Downtime
         attr_writer :named
 
         def named
-          @@named ||= "RACK_DOWNTIME"
+          @_named ||= "RACK_DOWNTIME"
         end
       end
 
@@ -42,6 +42,17 @@ class Rack::Downtime
 
       def call(env)
         Rack::Downtime::Utils.parse_downtime(env[@named])
+      end
+    end
+
+    class Header < Env
+      def self.named
+        @_named ||= "X-Downtime"
+      end
+
+      def initialize(named = nil)
+        @named = (named || self.class.named).upcase!.tr!("-", "_")
+        @named.prepend "HTTP_" unless @named.start_with?("HTTP_")
       end
     end
 

@@ -137,6 +137,10 @@ describe Rack::Downtime do
       @body = @dates.map { |d| d.strftime("%s") }.join("/")
     end
 
+    it "raises an ArgumentError when the strategy is unknown" do
+      expect { described_class.new(@app, :strategy => :g_code) }.to raise_error(ArgumentError, /unknown/) 
+    end
+
     describe ":cookie" do
       before { @downtime = Rack::Utils.escape(@downtime) }
 
@@ -175,6 +179,16 @@ describe Rack::Downtime do
       it "sets the downtime from the RACK_DOWNTIME environment variable" do
         req = Rack::Test::Session.new(described_class.new(@app, :strategy => :env))
         req.get "/", nil, "RACK_DOWNTIME" => @downtime
+
+        expect(req.last_response.body).to eq(@body)
+      end
+    end
+
+    describe ":header" do
+      it "sets the downtime from the X-Downtime HTTP header" do
+        req = Rack::Test::Session.new(described_class.new(@app, :strategy => :header))
+        req.header "X-Downtime", @downtime
+        req.get "/"
 
         expect(req.last_response.body).to eq(@body)
       end

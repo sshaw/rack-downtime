@@ -54,9 +54,9 @@ use Rack::Downtime, :insert => "my_template.erb", :insert_at => "body #container
 The downtime can be set various ways:
 
 ```ruby
-# From a cookie
-use Rack::Downtime, :strategy => :cookie
-use Rack::Downtime, :strategy => { :cookie => "my_cookie" }
+# From an HTTP header
+use Rack::Downtime, :strategy => :header
+use Rack::Downtime, :strategy => { :header => "X-MyHeader" }
 
 # Or from the query string
 use Rack::Downtime, :strategy => :query
@@ -125,6 +125,22 @@ To use a query string named `q`:
 ```ruby
 use Rack::Downtime :strategy => { :query => "q" }
 ```
+
+#### `:header`
+
+Looks for an HTTP header named `X-Downtime`.
+
+```ruby
+use Rack::Downtime :strategy => :header
+```
+To look for a header named `X-DT-4SHO`:
+
+```ruby
+use Rack::Downtime :strategy => { :header => "X-DT-4SHO" }
+```
+
+Internally the header will be converted to match
+[what rack generates](http://www.rubydoc.info/github/rack/rack/master/file/SPEC#The_Environment), e.g., `HTTP_*`.
 
 #### `:env`
 
