@@ -22,7 +22,7 @@ class Rack::Downtime
       def call(env)
         req = Rack::Request.new(env)
         Rack::Downtime::Utils.parse_downtime(req.cookies[@named])
-        #delete_cookie_header!(env, @name) if downtime
+        #delete_cookie_header!(env, @named) if downtime
         #downtime
       end
     end
@@ -51,7 +51,7 @@ class Rack::Downtime
       end
 
       def initialize(named = nil)
-        @named = (named || self.class.named).upcase!.tr!("-", "_")
+        @named = (named || self.class.named).upcase.tr!("-", "_")
         @named.prepend "HTTP_" unless @named.start_with?("HTTP_")
       end
     end

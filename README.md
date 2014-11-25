@@ -26,7 +26,7 @@ In your layout:
   <div>
     <p>
       We will be down for maintenance on
-      <%= ENV["rack.downtime"][0].strftime("%b %e") %> from
+	  <%= ENV["rack.downtime"][0].strftime("%b %e") %> from
 	  <%= ENV["rack.downtime"][0].strftime("%l:%M %p") %> to
 	  <%= ENV["rack.downtime"][1].strftime("%l:%M %p") %> EST.
 	</p>
@@ -54,7 +54,7 @@ use Rack::Downtime, :insert => "my_template.erb", :insert_at => "body #container
 The downtime can be set various ways:
 
 ```ruby
-# From an HTTP header
+# From the HTTP header X-Downtime
 use Rack::Downtime, :strategy => :header
 use Rack::Downtime, :strategy => { :header => "X-MyHeader" }
 

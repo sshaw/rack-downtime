@@ -6,7 +6,11 @@ require "rack/downtime/strategy"
 require "rack/downtime/version"
 
 module Rack
+  ##
+  # For the full documentation see README.md
+
   class Downtime
+
     DOWNTIME_DISABLE = "RACK_DOWNTIME_DISABLE".freeze
     DOWNTIME_INSERT = "RACK_DOWNTIME_INSERT".freeze
 
@@ -20,10 +24,29 @@ module Rack
     class << self
       attr_writer :strategy
 
+      ##
+      # Set the default downtime strategy
       def strategy
-        @@strategy ||= :file
+        @strategy ||= :file
       end
     end
+
+    ##
+    # Create an instance of the Rack middleware to manage downtime notifications
+    #
+    # === Arguments
+    #
+    # [options (Hash)] downtime detection and insertion options; optional
+    #
+    # === Options
+    #
+    # [:strategy (Symbol|Hash)] Set the downtime detection strategy; defaults to Rack::Downtime::strategy. If a +Hash+ its first value is passed as an argument to the strategy class.
+    # [:insert (String)] Path to an ERB template to insert when downtime is planned. Downtimes are given to the template as +start_time+ and +end_time+.
+    # [:insert_at (String)] Where to insert the ERB template given by +:insert+. Can be given as a CSS selector or an XPath location.
+    #
+    # === Errors
+    #
+    # [ArgumentError] If the strategy is unknown
 
     def initialize(app, options = {})
       @app = app
